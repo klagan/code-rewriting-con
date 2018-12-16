@@ -30,7 +30,7 @@ namespace HelloWorld
 {
     class Program
     {
-        static void Main([FromHeader(Name = ""kamtest"")] string[] args, [FromHeader] int testParam)
+        static void Main([KamTest][FromHeader(Name = ""kamtest"")] string[] args, [FromHeader] int testParam)
         {
             Console.WriteLine(""Hello, World!"");
         }
@@ -166,49 +166,64 @@ static void Test([FromBody(Name=""kam"")] string a, int b)
 
     public class KamWriter : CSharpSyntaxRewriter
     {
-        public override SyntaxNode VisitParameter(ParameterSyntax node)
-        {
-            var paramName = node.Identifier.ToFullString();
-            var name = ParseName("MyAttribute");
-            var arguments = ParseAttributeArgumentList($"(Name = \"{paramName}\")");
-            var attribute = Attribute(name, arguments);
-
-            var attributeList = new SeparatedSyntaxList<AttributeSyntax>();
-            attributeList = attributeList.Add(attribute);
-            var list = AttributeList(attributeList);
-
-            if (node.AttributeLists.Any())
-            {
-                return node.ReplaceNode(node.AttributeLists[0], list);
-            }
-
-            
-        
-            return base.VisitParameter(node);
-        }
-
-
-        //public override SyntaxNode VisitAttribute(AttributeSyntax node)
+        //public override SyntaxNode VisitParameter(ParameterSyntax node)
         //{
-        //    var oldAttribute = node;
-
-        //    if (oldAttribute.Name.ToFullString() != "FromHeader")
-        //    {
-        //        return base.VisitAttribute(node);
-        //    }
-
+        //    var paramName = node.Identifier.ToFullString();
         //    var name = ParseName("MyAttribute");
-        //    var arguments = ParseAttributeArgumentList("(Name = \"some_param\")");
-        //    var attribute = Attribute(name, arguments); 
+        //    var arguments = ParseAttributeArgumentList($"(Name = \"{paramName}\")");
+        //    var attribute = Attribute(name, arguments);
 
         //    var attributeList = new SeparatedSyntaxList<AttributeSyntax>();
         //    attributeList = attributeList.Add(attribute);
         //    var list = AttributeList(attributeList);
 
-        //    node = oldAttribute.ReplaceNode(oldAttribute, attribute);
+        //    if (node.AttributeLists.Any())
+        //    {
 
-        //    return node;
+        //        foreach (var a in node.AttributeLists)
+        //        {
 
+        //        }
+
+        //        return node.ReplaceNode(node.AttributeLists[0], list);
+        //    }
+
+            
+        
+        //    return base.VisitParameter(node);
         //}
+
+
+        public override SyntaxNode VisitAttribute(AttributeSyntax node)
+        {
+            SyntaxNode parent = node;
+
+            while (parent.Kind() != SyntaxKind.Parameter)
+            {
+                parent = parent.Parent;
+            }
+
+            if (node.Name.ToFullString() != "FromHeader")
+            {
+                return base.VisitAttribute(node);
+            }
+
+            if (!(parent is ParameterSyntax)) return base.VisitAttribute(node);
+        
+            var parameterName = (parent as ParameterSyntax).Identifier.ToFullString();
+
+            var name = ParseName("MyAttribute");
+            var arguments = ParseAttributeArgumentList($"(Name = \"{parameterName}\")");
+            var attribute = Attribute(name, arguments);
+
+            //var attributeList = new SeparatedSyntaxList<AttributeSyntax>();
+            //attributeList = attributeList.Add(attribute);
+            //var list = AttributeList(attributeList);
+
+            node = node.ReplaceNode(node, attribute);
+            
+            return base.VisitAttribute(node);
+
+        }
     }
 }
