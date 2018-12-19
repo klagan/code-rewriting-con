@@ -20,21 +20,24 @@ namespace HelloWorld
 {
     class Program
     {
+        [SwaggerOperation(""SomethingOrOther"")]
+        [Route(""MyRoute""]
         static string Main([KamTest][FromHeader(Name = ""kamtest"")] string[] args, [FromHeader] int testParam)
         {
             Console.WriteLine(""My Test"");
         }
 
-static string Test([FromBody(Name=""kam"")] string a, int b)
-{
-   return ""1"";
-}
+        static string Test([FromBody(Name=""kam"")] string a, int b)
+        {
+           return ""1"";
+        }
     }
 }");
             var node = (CompilationUnitSyntax) tree.GetRoot();
             
-            var newSourceCode = new MyRewriter().Visit(node).ToFullString();
-            
+            //var newSourceCode = new MyRewriter().Visit(node).ToFullString();
+
+            var newSourceCode = new MyMethodAndParameterWriter().Visit(node).ToFullString();
 
             Console.WriteLine($"{newSourceCode}");
 
